@@ -151,10 +151,14 @@ class HTTPBase:
         return body
 
 
-    def to_byte(self):
+    def to_byte(self, recount_len=False):
         """serialize the object
         """
         data = (self.firstline + '\r\n').encode()
+        
+        if recount_len:
+            self.headers['Content-Length'] = 0 if self.body is None else len(self.body)
+
         if self.headers:
             headerlines = ['{}: {}\r\n'.format(field, value).encode() for (field, value) in self.headers.items()]
             data += b''.join(headerlines)

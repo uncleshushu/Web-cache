@@ -66,10 +66,10 @@ def client_REQUEST(httpRequest, socket2s):
     socket2s.sendall(httpRequest.to_byte())
     print('request sent')
 
-def server_RESPONSE(httpResponse, socket2c):
+def server_RESPONSE(httpResponse, socket2c, recount_len=False):
     print('Now do RESPONSE')
 
-    socket2c.sendall(httpResponse.to_byte())
+    socket2c.sendall(httpResponse.to_byte(recount_len))
     
     print('response sent:')
     print(httpResponse.to_byte())
@@ -103,14 +103,13 @@ AUTH_FAILURE_RES = HTTPResponse()
 AUTH_FAILURE_RES.firstline = 'HTTP/1.1 407 Proxy Authentication Required'
 AUTH_FAILURE_RES.headers = {   
                             "Connection": "close",
-                            "Proxy-Authenticate": 'Basic realm="Authentication Required"',
-                            "Content-Length": "0"
+                            "Proxy-Authenticate": 'Basic realm="Authentication Required"'
                         }
 AUTH_FAILURE_RES.body = None    
 
 def proxy_authorize(dbManager, proxyRequest, socket2c):
     if not proxyRequest.proxy_user:    
-        server_RESPONSE(AUTH_FAILURE_RES, socket2c)
+        server_RESPONSE(AUTH_FAILURE_RES, socket2c, recount_len=True)
         print("sent 'Proxy Authentication Required' message")
         socket2c.close()
         return
@@ -122,7 +121,7 @@ def proxy_authorize(dbManager, proxyRequest, socket2c):
         if not is_valid:
             # AUTH_FAILURE_RES.body = 'Incorrect Token.'
             AUTH_FAILURE_RES.headers["Proxy-Authenticate"] = 'Basic realm="Incorrect Token"'
-            server_RESPONSE(AUTH_FAILURE_RES, socket2c)
+            server_RESPONSE(AUTH_FAILURE_RES, socket2c, recount_len=True)
 
             print("sent 'Unauthorized' message")
             
@@ -147,11 +146,10 @@ def forward_connect(proxyRequest, socket2s):
 
 FORBIDDEN_RES = HTTPResponse()
 FORBIDDEN_RES.firstline = 'HTTP/1.1 403 Forbidden'
-FORBIDDEN_RES.body = b'403 Forbidden'
 FORBIDDEN_RES.headers = {   
-                            "Connection": "close",
-                            "Content-Length": str(len(FORBIDDEN_RES.body))
+                            "Connection": "close"
                         }
+FORBIDDEN_RES.body = b'403 Forbidden\nYou are not allowed to visit this site.\n'
 
 
 def proxy_REQUEST(proxyRequest, socket2s): 
@@ -241,7 +239,7 @@ def proxy_handle(socket2c, require_auth=False, use_rules=False):
                 pass
             elif redirect_host == '':
                 # forbidden
-                server_RESPONSE(FORBIDDEN_RES, socket2c)
+                server_RESPONSE(FORBIDDEN_RES, socket2c, recount_len=True)
                 socket2c.close()
                 print('403 Forbidden')
             else:
