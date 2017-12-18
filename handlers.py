@@ -150,6 +150,44 @@ FORBIDDEN_RES.headers = {
                             "Connection": "close"
                         }
 FORBIDDEN_RES.body = b'403 Forbidden\nYou are not allowed to visit this site.\n'
+def filter(proxyRequest, rules):
+    isforbidden = False
+    if not rules:
+        isforbidden = False
+        return isforbidden
+
+    # print('rules: ')
+    # print(rules)
+    print('proxyRequest.path:')
+    print(proxyRequest.path)
+    # if proxyRequest.path.startswith("http://"):
+    #     redirect_url = rules.get(proxyRequest.path)
+    # else:
+    #     redirect_url = rules.get("http://" + proxyRequest.headers.get('Host') + proxyRequest.path)
+
+    redirect_host = rules.get(proxyRequest.headers.get('Host'))
+    
+    print('redirect_host: ', redirect_host)
+
+    if redirect_host is None:
+        # no rule for this host
+        isforbidden = False
+        
+    elif redirect_host == '':
+        # forbidden
+        isforbidden = True
+        print('403 Forbidden')
+        
+    else:
+        isforbidden = False
+        proxyRequest.firstline = proxyRequest.firstline.replace(proxyRequest.headers.get('Host'), redirect_host)
+        proxyRequest.path = proxyRequest.path.replace(proxyRequest.headers.get('Host'), redirect_host)
+        proxyRequest.headers['Host'] = redirect_host
+
+        print('modified request message:')
+        print(proxyRequest.to_byte().decode(errors='ignore'))
+
+    return isforbidden
 
 
 def proxy_REQUEST(proxyRequest, socket2s): 
@@ -210,7 +248,7 @@ def proxy_handle(socket2c, require_auth=False, use_rules=False):
     proxyRequest = ProxyRequest(socket2c_file)
 
     print('original request:')
-    print(proxyRequest.to_byte().decode())
+    print(proxyRequest.to_byte().decode(errors='ignore'))
 
     if require_auth or use_rules:
         dbManager = DBManager()
@@ -220,36 +258,11 @@ def proxy_handle(socket2c, require_auth=False, use_rules=False):
 
     if use_rules:
         rules = dbManager.get_rules(proxyRequest.proxy_user)
-        if rules:
-            print('rules: ')
-            print(rules)
-            print('proxyRequest.path:')
-            print(proxyRequest.path)
-            # if proxyRequest.path.startswith("http://"):
-            #     redirect_url = rules.get(proxyRequest.path)
-            # else:
-            #     redirect_url = rules.get("http://" + proxyRequest.headers.get('Host') + proxyRequest.path)
-
-            redirect_host = rules.get(proxyRequest.headers.get('Host'))
-            
-            print('redirect_host: ', redirect_host)
-
-            if redirect_host is None:
-                # no rule for this url
-                pass
-            elif redirect_host == '':
-                # forbidden
-                server_RESPONSE(FORBIDDEN_RES, socket2c, recount_len=True)
-                socket2c.close()
-                print('403 Forbidden')
-            else:
-                proxyRequest.firstline = proxyRequest.firstline.replace(proxyRequest.headers.get('Host'), redirect_host)
-                proxyRequest.path = proxyRequest.path.replace(proxyRequest.headers.get('Host'), redirect_host)
-                proxyRequest.headers['Host'] = redirect_host
-
-                print('modified request message:')
-                print(proxyRequest.to_byte().decode())
-
+        isforbidden = filter(proxyRequest, rules)
+        if isforbidden:
+            server_RESPONSE(FORBIDDEN_RES, socket2c, recount_len=True)
+            socket2c.close()
+            return
 
 
     socket2s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -280,7 +293,7 @@ def proxy_handle(socket2c, require_auth=False, use_rules=False):
 
                 proxyRequest = ProxyRequest(socket2c_file)
                 print('original request:')
-                print(proxyRequest.to_byte().decode())
+                print(proxyRequest.to_byte().decode(errors='ignore'))
             except EOFError as eofError:
                 # logger
                 print(eofError)
