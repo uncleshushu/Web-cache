@@ -1,0 +1,20 @@
+1. Transfer-Encoding: chunked
+
+    Is it necessary to read a line of '\r\n' after read `chunklen` bytes?
+
+2. _parse_firstline(self)
+    
+    Will it be overloaded in subclasses when calling `super().__init__()`?
+
+3. decorators for proxy and cache
+
+4. more specified exception classes
+
+    ConnectionClosed, ...
+
+5. Logger
+
+6. Run as a service(daemon)
+
+7. CLI for managing
+

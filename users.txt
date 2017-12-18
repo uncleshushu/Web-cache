@@ -1,0 +1,15 @@
+root 
+
+
+
+admin       
+password        
+{
+    "http://cc.scu.edu.cn/":"http://swjx.scu.edu.cn/",
+    "http://jwc.scu.edu.cn/":""
+}
+
+
+
+shushu      
+123456           
