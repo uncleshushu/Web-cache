@@ -163,8 +163,14 @@ def filter(proxyRequest, rules):
     #     redirect_url = rules.get(proxyRequest.path)
     # else:
     #     redirect_url = rules.get("http://" + proxyRequest.headers.get('Host') + proxyRequest.path)
+    host_port = proxyRequest.headers['Host'].rsplit(":")
+    host = host_port[0]
+    # e.g.: "www.baidu.com":""
+    redirect_host = rules.get(host)
+    if redirect_host is None:
+        # e.g.: "www.baidu.com:443":""
+        redirect_host = rules.get(proxyRequest.headers['Host'])
 
-    redirect_host = rules.get(proxyRequest.headers.get('Host'))
     
     print('redirect_host: ', redirect_host)
 
@@ -297,6 +303,13 @@ def proxy_handle(socket2c, require_auth=False, use_rules=False):
                 proxyRequest = ProxyRequest(socket2c_file)
                 print('original request:')
                 print(proxyRequest.to_byte().decode(errors='ignore'))
+                if use_rules:
+                    isforbidden = filter(proxyRequest, rules)
+                    if isforbidden:
+                        server_RESPONSE(FORBIDDEN_RES, socket2c, recount_len=True)
+                        socket2c.close()
+                        socket2s.close()
+                        return
             except EOFError as eofError:
                 # logger
                 print(eofError)
