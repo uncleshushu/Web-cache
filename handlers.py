@@ -108,25 +108,24 @@ AUTH_FAILURE_RES.headers = {
 AUTH_FAILURE_RES.body = None    
 
 def proxy_authorize(dbManager, proxyRequest, socket2c):
-    if not proxyRequest.proxy_user:    
-        server_RESPONSE(AUTH_FAILURE_RES, socket2c, recount_len=True)
+    if not proxyRequest.proxy_user:  
+        AUTH_FAILURE_RES.body = b'Proxy Authentication Required.'
         print("sent 'Proxy Authentication Required' message")
-        socket2c.close()
-        return
+        return False
 
     try:
         print('username provided: ', proxyRequest.proxy_user)
         print('password provided: ', proxyRequest.proxy_pass)
         is_valid = dbManager.user_auth(proxyRequest.proxy_user, proxyRequest.proxy_pass)
         if not is_valid:
-            # AUTH_FAILURE_RES.body = 'Incorrect Token.'
+            AUTH_FAILURE_RES.body = b'Incorrect Token.'
             AUTH_FAILURE_RES.headers["Proxy-Authenticate"] = 'Basic realm="Incorrect Token"'
-            server_RESPONSE(AUTH_FAILURE_RES, socket2c, recount_len=True)
-
-            print("sent 'Unauthorized' message")
             
-            socket2c.close()
-            return    
+            print("sent 'Unauthorized' message")
+  
+            return False
+        else:
+            return True
     
     except ValueError as valueError:
         print(valueError, file=sys.stderr)
@@ -254,7 +253,11 @@ def proxy_handle(socket2c, require_auth=False, use_rules=False):
         dbManager = DBManager()
 
     if require_auth:
-        proxy_authorize(dbManager, proxyRequest, socket2c)
+        isvalid = proxy_authorize(dbManager, proxyRequest, socket2c)
+        if not isvalid:
+            server_RESPONSE(AUTH_FAILURE_RES, socket2c, recount_len=True)
+            socket2c.close()
+            return
 
     if use_rules:
         rules = dbManager.get_rules(proxyRequest.proxy_user)
