@@ -47,7 +47,7 @@ def is_keep_alive(httpBase):
         return False
 
 
-class HTTPBase:
+class HTTPMessage:
     '''Base class for HTTP messages
     '''
     def __init__(self, sockfile=None):
@@ -155,7 +155,7 @@ class HTTPBase:
         """serialize the object
         """
         data = (self.firstline + '\r\n').encode()
-        
+
         if recount_len:
             self.headers['Content-Length'] = 0 if self.body is None else len(self.body)
 
@@ -171,7 +171,7 @@ class HTTPBase:
         return data
 
 
-class HTTPRequest(HTTPBase):
+class HTTPRequest(HTTPMessage):
     def __init__(self, sockfile=None):
         super(HTTPRequest, self).__init__(sockfile)
 
@@ -215,7 +215,7 @@ class HTTPRequest(HTTPBase):
             # not in the form like 'GET /hello.png HTTP/1.1'
             raise ValueError('Request line format error')
 
-class HTTPResponse(HTTPBase):
+class HTTPResponse(HTTPMessage):
     def __init__(self, sockfile=None):
         super(HTTPResponse, self).__init__(sockfile)
 
