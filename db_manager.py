@@ -2,6 +2,8 @@
 
 '''
 '''
+import os
+import base64
 import sqlite3
 import hmac
 import json
@@ -141,5 +143,5 @@ class DBManager:
 
 
 
-    def query_cache(self, httpRequest, db_conn):
+    def query_cache(self, host_port, path):
         pass

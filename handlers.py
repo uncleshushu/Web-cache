@@ -63,8 +63,11 @@ def client_POST(httpRequest, socket2s):
 
 def client_REQUEST(httpRequest, socket2s):
     print('Now do client REQUEST')
+
     socket2s.sendall(httpRequest.to_byte())
-    print('request sent')
+
+    print('request sent:')
+    print(httpRequest.to_byte().decode(errors='ignore'))
 
 def server_RESPONSE(httpResponse, socket2c, recount_len=False):
     print('Now do RESPONSE')
@@ -73,9 +76,6 @@ def server_RESPONSE(httpResponse, socket2c, recount_len=False):
     
     print('response sent:')
     print(httpResponse.to_byte())
-
-    print('do RESPONSE finished')
-
 
 
 ###########################################
@@ -189,8 +189,7 @@ def filter(proxyRequest, rules):
         proxyRequest.path = proxyRequest.path.replace(proxyRequest.headers.get('Host'), redirect_host)
         proxyRequest.headers['Host'] = redirect_host
 
-        print('modified request message:')
-        print(proxyRequest.to_byte().decode(errors='ignore'))
+        print('modified request message')
 
     return isforbidden
 
@@ -248,7 +247,7 @@ def tunneling(socket_a, socket_b):
                 raise eofError
 
 
-def proxy_handle(socket2c, require_auth=False, use_rules=False):
+def proxy_handle(socket2c, require_auth=False, use_rules=False, with_cache=False):
     socket2c_file = socket2c.makefile('rb', -1)
     proxyRequest = ProxyRequest(socket2c_file)
 
@@ -322,12 +321,6 @@ def proxy_handle(socket2c, require_auth=False, use_rules=False):
 # functions for web-cache
 ###########################################
 
-def cache_GET(httpRequest, socket2c, socket2s, db_conn):
-
-    last_modified_date, resource = query_cache(httpRequest, db_conn)
-    httpRequest.headers['If-Modified-Since'] = last_modified_date
-
-    client_GET(httpRequest, socket2s)
 
 
 
