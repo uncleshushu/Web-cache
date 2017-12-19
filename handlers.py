@@ -199,6 +199,10 @@ def proxy_REQUEST(proxyRequest, socket2s):
         proxyRequest.headers.pop('Proxy-Authorization')
     if proxyRequest.headers.get('Proxy-Connection'):
         proxyRequest.header.pop('Proxy-Connection')
+    if proxyRequest.path.startswith('http'):
+        # some servers can not parse path beginning with 'http://'
+        proxyRequest.path = proxyRequest.path.replace('http://' + proxyRequest.headers['Host'], '')
+        proxyRequest.firstline = ''.join([proxyRequest.method, ' ', proxyRequest.path, ' ', proxyRequest.http_version])
 
     client_REQUEST(proxyRequest, socket2s)
     
@@ -271,12 +275,15 @@ def proxy_handle(socket2c, require_auth=False, use_rules=False, with_cache=False
             server_RESPONSE(FORBIDDEN_RES, socket2c, recount_len=True)
             socket2c.close()
             return
-
+    
+    # clients may reuse the connection to request another 'Host'
+    first_host = proxyRequest.headers['Host']
 
     socket2s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     forward_connect(proxyRequest, socket2s)
     socket2s_file = socket2s.makefile('rb', -1)
 
+    
     if proxyRequest.method == 'CONNECT':
         # logger
         print('serving as an HTTPS proxy...')
@@ -309,6 +316,12 @@ def proxy_handle(socket2c, require_auth=False, use_rules=False, with_cache=False
                         socket2c.close()
                         socket2s.close()
                         return
+                if not (proxyRequest.headers['Host'] == first_host):
+                    # force the client to create a new connection for another 'Host'
+                    socket2c.close()
+                    socket2s.close()
+                    print("Host changed!")
+                    return
             except EOFError as eofError:
                 # logger
                 print(eofError)
