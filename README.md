@@ -16,7 +16,7 @@ password: password
 
 - [add_user.py](add_user.py)是添加用户和密码的脚本
 
--[rules](rules)文件夹存放的是用户对应的规则，采用`json`格式。规则文件命名格式为：`username.rule`。规则样例 ([admin.rule](rules/admin.rule)) ：
+- [rules](rules)文件夹存放的是用户对应的规则，采用`json`格式。规则文件命名格式为：`username.rule`。规则样例 ([admin.rule](rules/admin.rule)) ：
 
 ```json
 {
