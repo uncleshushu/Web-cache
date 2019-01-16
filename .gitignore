@@ -1,3 +1,20 @@
-*.pyc
+# CPython caches
+__pycache__/
+
+# mypy caches
+
+.mypy_cache/
+
+# vscode settings
+.vscode/
+
+# sqlite database
+*.db
+
+# web caches
+caches/
+
+# test logs
 log.txt
 
+issues.txt

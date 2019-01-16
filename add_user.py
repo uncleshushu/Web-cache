@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import db_manager
 
 DB_PATH = 'proxy_db.db'

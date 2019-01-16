@@ -1,15 +1,19 @@
-
-create table users
+create table if not exists
+users
 (
-    name varchar(20) primary key,
-    passwd_hash varchar(20),
-    rule_path varchar(200)
+    name varchar primary key,
+    passwd_hash varchar,
+    rule_path varchar
 );
 
-create table caches
+create table if not exists
+caches
 (
-    uri varchar(2000) primary key,
-    last_modified varchar(30),
-    path varchar(255)
+    url_hash varchar primary key,
+    cache_path varchar,
+    cached_time timestamp,
+    max_age integer,
+    etag varchar,
+    last_modified varchar
 );
 
